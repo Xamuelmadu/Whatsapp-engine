@@ -27,7 +27,21 @@ async function addMessage(phone, role, content){
   await convo.save();
 }
 
+async function saveMessage(phone, role, content){
+  return addMessage(phone, role, content);
+}
+
+async function updateConversationState(phone, update){
+
+  await Conversation.findOneAndUpdate(
+    { phone },
+    { $set: update }
+  );
+}
+
 module.exports = {
   getConversation,
-  addMessage
+  addMessage,
+  saveMessage,
+  updateConversationState
 };

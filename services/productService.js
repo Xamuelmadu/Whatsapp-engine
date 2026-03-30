@@ -10,4 +10,12 @@ async function searchProducts(query){
 
 }
 
-module.exports = { searchProducts };
+async function getStoreProducts(merchantId){
+
+  const products = await Product.find({ merchant_id: merchantId });
+
+  return products;
+
+}
+
+module.exports = { searchProducts, getStoreProducts };
