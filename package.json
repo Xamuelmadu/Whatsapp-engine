@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-ai-engine",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.2.4",
+    "node-cron": "^4.2.1",
+    "openai": "^6.33.0"
+  }
+}
