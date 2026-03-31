@@ -53,15 +53,16 @@ app.get("/webhook", (req, res) => {
 // =============================
 app.post("/webhook", async (req, res) => {
   try {
+    const body = req.body;
+
     const message =
-      req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+      body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+
+    const metadata =
+      body.entry?.[0]?.changes?.[0]?.value?.metadata;
 
     if (message) {
-      console.log("Incoming message:", JSON.stringify(message, null, 2));
-
-      await handleIncomingMessage(message);
-    } else {
-      console.log("No message payload received");
+      await handleIncomingMessage(message, metadata);
     }
 
     res.sendStatus(200);

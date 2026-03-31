@@ -1,97 +1,57 @@
-const { getMerchantByNumber } = require("../services/merchantService")
-const { generateAIReply } = require("../services/aiService")
-const { sendWhatsAppMessage } = require("../services/whatsappService")
-const { isAgentActive } = require("../services/agentService")
+const { getMerchantByNumber } = require("../services/merchantService");
+const { generateAIReply } = require("../services/aiService");
+const { sendWhatsAppMessage } = require("../services/whatsappService");
+const { isAgentActive } = require("../services/agentService");
 
+async function handleIncomingMessage(message, metadata) {
+  try {
+    if (!message) return;
 
+    const businessPhoneId = metadata?.phone_number_id;
+    const customerNumber = message.from;
+    const text = message.text?.body || "";
 
-async function handleIncomingMessage(req,res){
+    // =============================
+    // AGENT HANDOFF CHECK
+    // =============================
+    const agentActive = await isAgentActive(customerNumber);
 
-  try{
-
-    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]
-
-    if(!message){
-      return res.sendStatus(200)
+    if (agentActive) {
+      console.log("Agent handling conversation for:", customerNumber);
+      return;
     }
 
-    const metadata = req.body.entry[0].changes[0].value.metadata
+    // =============================
+    // IDENTIFY MERCHANT
+    // =============================
+    const merchant = await getMerchantByNumber(businessPhoneId);
 
-    const businessPhoneId = metadata.phone_number_id
-    const customerNumber = message.from
-    const text = message.text?.body || ""
-
-
-    /*
-    Check if human agent has taken over conversation
-    */
-
-    const agentActive = await isAgentActive(customerNumber)
-
-    if(agentActive){
-
-      console.log("Agent handling conversation for:",customerNumber)
-
-      return res.sendStatus(200)
-
+    if (!merchant) {
+      console.log("No merchant found for phone id:", businessPhoneId);
+      return;
     }
 
-
-
-    /*
-    Identify merchant store
-    */
-
-    const merchant = await getMerchantByNumber(businessPhoneId)
-
-    if(!merchant){
-
-      console.log("No merchant found for phone id:",businessPhoneId)
-
-      return res.sendStatus(200)
-
-    }
-
-
-
-    /*
-    Generate AI reply using merchant context
-    */
-
+    // =============================
+    // GENERATE AI REPLY
+    // =============================
     const reply = await generateAIReply(
-
       customerNumber,
       text,
       merchant
+    );
 
-    )
+    // =============================
+    // SEND WHATSAPP MESSAGE
+    // =============================
+    console.log("Sending reply to:", customerNumber);
 
+    await sendWhatsAppMessage(customerNumber, reply);
 
-
-    /*
-    Send WhatsApp reply
-    */
-
-    await sendWhatsAppMessage(customerNumber,reply)
-
-
-
-    res.sendStatus(200)
-
-  }catch(error){
-
-    console.error("Webhook error:",error)
-
-    res.sendStatus(200)
-
+  } catch (error) {
+    console.error("Webhook error:", error.message);
   }
-
 }
-
-
 
 module.exports = {
-
-  handleIncomingMessage
-
-}
+  handleIncomingMessage,
+};
