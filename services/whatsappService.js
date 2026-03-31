@@ -2,21 +2,23 @@ const axios = require("axios");
 
 async function sendProductCard(to, product) {
   try {
-    const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
-    const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+    const PHONE_NUMBER_ID = (process.env.PHONE_NUMBER_ID || "").trim();
+    const WHATSAPP_TOKEN = (process.env.WHATSAPP_TOKEN || "").trim();
 
-    // ✅ Validate env (prevents "Invalid URL")
-    if (!PHONE_NUMBER_ID) {
-      throw new Error("PHONE_NUMBER_ID is missing");
+    // ✅ Strong validation (fixes Invalid URL fully)
+    if (!PHONE_NUMBER_ID || !/^\d+$/.test(PHONE_NUMBER_ID)) {
+      throw new Error(`Invalid PHONE_NUMBER_ID: "${PHONE_NUMBER_ID}"`);
     }
 
     if (!WHATSAPP_TOKEN) {
       throw new Error("WHATSAPP_TOKEN is missing");
     }
 
-    const url = `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`;
+    const url = `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`;
 
-    // ✅ Safe product fields (prevents crashes)
+    console.log("📡 Sending to URL:", url);
+
+    // ✅ Safe product fields
     const imageUrl = product?.images?.[0];
     const name = product?.name || "Product";
     const description = product?.description
@@ -32,7 +34,7 @@ async function sendProductCard(to, product) {
       url,
       {
         messaging_product: "whatsapp",
-        to: to,
+        to: String(to).replace("+", ""), // ✅ normalize number
         type: "image",
         image: {
           link: imageUrl,
