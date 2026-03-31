@@ -1,51 +1,28 @@
 const axios = require("axios");
 
-async function sendProductCard(to, product) {
+async function sendWhatsAppMessage(to, text) {
   try {
     const PHONE_NUMBER_ID = (process.env.PHONE_NUMBER_ID || "").trim();
     const WHATSAPP_TOKEN = (process.env.WHATSAPP_TOKEN || "").trim();
 
-    // ✅ Strong validation (fixes Invalid URL fully)
-    if (!PHONE_NUMBER_ID || !/^\d+$/.test(PHONE_NUMBER_ID)) {
-      throw new Error(`Invalid PHONE_NUMBER_ID: "${PHONE_NUMBER_ID}"`);
+    if (!PHONE_NUMBER_ID) {
+      throw new Error("PHONE_NUMBER_ID missing");
     }
 
     if (!WHATSAPP_TOKEN) {
-      throw new Error("WHATSAPP_TOKEN is missing");
+      throw new Error("WHATSAPP_TOKEN missing");
     }
 
     const url = `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`;
 
-    console.log("📡 Sending to URL:", url);
-
-    // ✅ Safe product fields
-    const imageUrl = product?.images?.[0];
-    const name = product?.name || "Product";
-    const description = product?.description
-      ? product.description.substring(0, 120)
-      : "No description available";
-    const price = product?.price ?? "N/A";
-
-    if (!imageUrl) {
-      throw new Error("Product image is missing");
-    }
+    console.log("📡 TEXT MESSAGE URL:", url);
 
     await axios.post(
       url,
       {
         messaging_product: "whatsapp",
-        to: String(to).replace("+", ""), // ✅ normalize number
-        type: "image",
-        image: {
-          link: imageUrl,
-          caption: `${name}
-
-${description}...
-
-Price: $${price}
-
-Would you like to order this product?`
-        }
+        to: String(to).replace("+", ""),
+        text: { body: text }
       },
       {
         headers: {
@@ -55,14 +32,14 @@ Would you like to order this product?`
       }
     );
 
-    console.log("✅ Product card sent to:", to);
+    console.log("✅ Text message sent to:", to);
 
   } catch (error) {
     console.error(
-      "❌ sendProductCard error:",
+      "❌ sendWhatsAppMessage error:",
       error.response?.data || error.message
     );
   }
 }
 
-module.exports = { sendProductCard };
+module.exports = { sendWhatsAppMessage };
